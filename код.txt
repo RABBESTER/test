@@ -1,0 +1,214 @@
+import pygame  
+from pygame.locals import *  
+import time
+# Ініціалізація Pygame
+pygame.init()
+print("всі в Україні в 2100 році будуть грати в пінг-понг Бо це круто і круто А ще круто!!!")
+print("примітка: (щоби почати грати будь ласка Нажміть на одну з платформ)")
+# Налаштування вікна гри
+screen_width = 500  # Ширина вікна гри
+screen_height = 500  # Висота вікна гри
+screen = pygame.display.set_mode((screen_width, screen_height))  # Створення вікна з заданими розмірами
+pygame.display.set_caption("Пінпонг")  # Встановлення заголовка вікна
+
+# Налаштування кольорів
+BLACK = (0, 0, 0)  # Чорний колір
+WHITE = (255, 255, 255)  # Білий колір
+RED = (255, 0, 0)  # Червоний колір
+GREEN = (0, 255, 51)  # Зелений колір
+YELLOW = (255, 255, 0)  # Жовтий колір
+DARK_BLUE = (0, 0, 100)  # Темно-синій колір
+BLUE = (80, 80, 255)  # Синій колір
+LIGHT_GREEN = (200, 255, 200)  # Світло-зелений колір
+LIGHT_GREEN1 = (0, 153, 153)  # Світло-зелений колір 1
+LIGHT_RED = (250, 128, 114)  # Світло-червоний колір
+
+# Налаштування ракеток
+paddle_width = 10  # Ширина ракетки
+paddle_height = 60  # Висота ракетки
+paddle_speed = 5  # Швидкість руху ракетки
+
+# Ініціалізація ракеток
+paddle1_x = 10  # Початкова позиція ракетки 1 по осі X
+paddle1_y = screen_height // 2 - paddle_height // 2  # Початкова позиція ракетки 1 по осі Y
+paddle2_x = screen_width - paddle_width - 10  # Початкова позиція ракетки 2 по осі X
+paddle2_y = screen_height // 2 - paddle_height // 2  # Початкова позиція ракетки 2 по осі Y
+
+# Налаштування м'яча
+ball_width = 10  # Ширина м'яча
+ball_height = 10  # Висота м'яча
+ball_speed_x = 3  # Швидкість руху м'яча по осі X
+ball_speed_y = 3  # Швидкість руху м'яча по осі Y
+
+# Ініціалізація м'яча
+ball_x = screen_width // 2 - ball_width // 2  # Початкова позиція м'яча по осі X
+ball_y = screen_height // 2 - ball_height // 2  # Початкова позиція м'яча по осі Y
+
+# Рахунок гравців
+score1 = 0  # Рахунок гравця 1
+score2 = 0  # Рахунок гравця 2
+
+ball_speed_options = {
+
+'1': 1,
+'2': 1.5,
+'3': 2,
+'9': 4
+}
+
+print("           всім привіт це моя гра ПІНГ-ПОНГ   ")
+
+ball_speed = input("Виберіть швидкість м'ячика (повільний 1, середній 2, швидкий 3)")
+while ball_speed not in ball_speed_options:
+    print("Неправильний вибір швидкості (1.2.3)")
+    ball_speed=input("Виберіть швидкість м'ячика (повільний 1, середній 2, швидкий 3)")
+
+
+ball_speed_factor = ball_speed_options[ball_speed]
+ball_speed_x = ball_speed_factor * abs(ball_speed_x) if ball_speed_x < 0 else ball_speed_factor * ball_speed_x
+ball_speed_y = ball_speed_factor * abs(ball_speed_y) if ball_speed_y < 0 else ball_speed_factor * ball_speed_y
+
+time.sleep(3)
+
+class Area():
+    def __init__(self, x=0, y=0, width=10, height=10, color=None):
+        self.rect = pygame.Rect(x, y, width, height)  # Створення прямокутника з заданими координатами, розмірами та кольором
+        self.fill_color = color  # Задання кольору заливки прямокутника
+
+    def color(self, new_color):
+        self.fill_color = new_color  # Зміна кольору заливки прямокутника
+
+    def fill(self):
+        pygame.draw.rect(screen, self.fill_color, self.rect)  # Заливка прямокутника на екран
+    def outline(self, frame_color, thickness):
+        pygame.draw.rect(screen, frame_color, self.rect, thickness)  # Виведення контуру прямокутника на екрані з вказаним коліром та товщиною
+
+    def collidepoint(self, x, y):
+        return self.rect.collidepoint(x, y)  # Перевірка, чи точка з координатами (x, y) знаходиться всередині прямокутника
+
+class Label(Area):
+    def set_text(self, text, fsize=40, text_color=(0, 0, 0)):
+        self.image = pygame.font.SysFont('verdana', fsize).render(text, True, text_color)  # Створення зображення тексту
+
+    def draw(self, shift_x=0, shift_y=0):
+        self.fill()  # Заливка прямокутника з фоном
+        screen.blit(self.image, (self.rect.x + shift_x, self.rect.y + shift_y))
+
+class Picture(Area):
+    def __init__(self, filename, x=0, y=0, width=10, height=10):
+        super().__init__(x, y, width, height, None)
+        self.image = pygame.image.load(filename)
+
+    def draw(self):
+        mw.blit(self.image, (self.rect.x, self.rect.y))
+
+# Ініціалізація рахункових міток
+score_label1 = Label(20, 20, 30, 25, color=WHITE)  # Мітка рахунку гравця 1
+score_label2 = Label(screen_width - 50, 20, 30, 25, color=WHITE)  # Мітка рахунку гравця 2
+line = Area(240, 0, 10,500, color=WHITE)# Роздільна лінія по центру екрана
+
+wall1 = Area(0, 0, 5,500, color=WHITE)
+wall2 = Area(495, 0, 5,500, color=WHITE)
+wall3 = Area(0, 0, 500,5, color=WHITE)
+wall4 = Area(0, 500, 500,5, color=WHITE)
+
+
+
+# ПІНГ ПОНГ ЧАСТИНКА 1 КІНЕЦЬ
+
+
+
+
+
+
+
+
+# ПІНГ ПОНГ ЧАСТИНКА 2 ПОЧАТОК
+# Цикл гри
+running = True  # Змінна, що відповідає за запуск гри
+clock = pygame.time.Clock()  # Ініціалізація годинника для обмеження частоти кадрів
+
+
+while running:
+    # Обробка подій
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            running = False  # Завершення гри при закритті вікна
+
+    # Обробка руху ракеток
+    keys = pygame.key.get_pressed()
+    if keys[K_w] and paddle1_y > 0:
+        paddle1_y -= paddle_speed  # Рух ракетки гравця 1 вгору
+    if keys[K_s] and paddle1_y < screen_height - paddle_height:
+        paddle1_y += paddle_speed  # Рух ракетки гравця 1 вниз
+    if keys[K_UP] and paddle2_y > 0:
+        paddle2_y -= paddle_speed  # Рух ракетки гравця 2 вгору
+    if keys[K_DOWN] and paddle2_y < screen_height - paddle_height:
+        paddle2_y += paddle_speed  # Рух ракетки гравця 2 вниз
+
+    # Обробка руху м'яча
+    ball_x += ball_speed_x  # Рух м'яча по осі X
+    ball_y += ball_speed_y  # Рух м'яча по осі Y
+
+    # Відбивання м'яча від ракеток
+    if ball_x <= paddle1_x + paddle_width and paddle1_y < ball_y + ball_height < paddle1_y + paddle_height:
+        ball_speed_x = abs(ball_speed_x)  # Зміна напрямку руху м'яча при зіткненні з ракеткою гравця 1
+    if ball_x >= paddle2_x - ball_width and paddle2_y < ball_y + ball_height < paddle2_y + paddle_height:
+        ball_speed_x = -abs(ball_speed_x)  # Зміна напрямку руху м'яча при зіткненні з ракеткою гравця 2
+
+    # Відбивання м'яча від стін
+    if ball_x <= 0:
+        score2 += 1  # Збільшення рахунку гравця 2
+        ball_x = screen_width // 2 - ball_width // 2  # П
+        ball_speed_x = -ball_speed_x  # Зміна напрямку руху м'яча при зіткненні з лівою стіною
+    elif ball_x >= screen_width - ball_width:
+        score1 += 1  # Збільшення рахунку гравця 1
+        ball_x = screen_width // 2 - ball_width // 2  # Початкова позиція м'яча по осі X
+        ball_speed_x = -ball_speed_x  # Зміна напрямку руху м'яча при зіткненні з правою стіною
+
+    # Відбивання м'яча від верхньої та нижньої межі поля
+    if ball_y <= 0 or ball_y >= screen_height - ball_height:
+        ball_speed_y = -ball_speed_y  # Зміна напрямку руху м'яча при зіткненні з верхньою або нижньою межею поля
+
+    # Обмеження позиції м'яча у межах поля
+    ball_x = max(0, min(ball_x, screen_width - ball_width))  # Обмеження позиції м'яча по осі X
+    ball_y = max(0, min(ball_y, screen_height - ball_height))  # Обмеження позиції м'яча по осі Y
+
+    # Оновлення рахункових міток
+    score_label1.set_text(str(score1))  # Оновлення мітки рахунку гравця 1
+    score_label2.set_text(str(score2))  # Оновлення мітки рахунку гравця 2
+
+    # Відображення екрану та елементів гри
+    screen.fill(LIGHT_GREEN1)  # Заповнення екрану зеленим кольором
+    pygame.draw.rect(screen, WHITE, (paddle1_x, paddle1_y, paddle_width, paddle_height))  # Відображення ракетки гравця 1
+    pygame.draw.rect(screen, WHITE, (paddle2_x, paddle2_y, paddle_width, paddle_height))  # Відображення ракетки гравця 2
+    pygame.draw.rect(screen, WHITE, (ball_x, ball_y, ball_width, ball_height))  # Відображення м'яча
+
+    # Виведення рахункових міток на екран
+    score_label1.draw()  # Відображення мітки рахунку гравця 1
+    score_label2.draw()  # Відображення мітки рахунку гравця 2
+    line.fill()# Відображення роздільну лінію по центру
+    wall1.fill()
+    wall2.fill()
+    wall3.fill()
+    wall4.fill()
+
+
+    # Перевірка на перемогу гравця 1
+    if score1 >= 10:
+        win = Label
+        win = Label(0, 0, 700, 700, LIGHT_GREEN)  # Ініціалізація мітки перемоги зеленим кольором
+        win.set_text("Переміг гравець ліворуч!!!", 30, DARK_BLUE)  # Встановлення тексту та стилів мітки перемоги
+        win.draw(140, 180)  # Відображення мітки перемоги на екрані
+        pygame.quit()  # Завершення гри
+
+    # Перевірка на перемогу гравця 2
+    if score2 >= 10:
+        win = Label(0, 0, 700, 700, LIGHT_GREEN)  # Ініціалізація мітки перемоги зеленим кольором
+        win.set_text("Переміг гравець праворуч!!!", 30, DARK_BLUE)  # Встановлення тексту та стилів мітки перемоги
+        win.draw(140, 180)  # Відображення мітки перемоги на екрані
+        pygame.quit()  # Завершення гри
+
+    pygame.display.flip()  # Оновлення вмісту екрану
+    clock.tick(60)  # Обмеження кадрів на секунду
+pygame.quit()  # Завершення гри
